@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- CWV: Preconnect to Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Fonts: Syne (display) + DM Sans (body) -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <title>Snow Day Calculator — US & Canada</title>
+  <meta name="description" content="Predict your snow day probability for US and Canada schools. Enter your ZIP or postal code for instant weather-based forecast." />
+
+  <!-- CWV: Theme color -->
+  <meta name="theme-color" content="#0a0f1e" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Snow Day Calculator" />
+  <meta property="og:description" content="Will school be cancelled tomorrow? Find out instantly." />
+  <meta property="og:type" content="website" />
+
+  <!-- CWV: Inline critical CSS to avoid render-blocking -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      background: #0a0f1e;
+      color: #e8eaf0;
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root { min-height: 100vh; }
+    /* Prevent layout shift from fonts */
+    .font-display { font-family: 'Syne', sans-serif; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <!-- CWV: defer JS -->
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
