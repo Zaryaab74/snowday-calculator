@@ -1,13 +1,6 @@
 import httpx
-import asyncio
 from datetime import datetime, timedelta
 from typing import Optional
-
-# ─────────────────────────────────────────
-# Zippopotam — ZIP → City/Lat/Lon (FREE, no key, no User-Agent issues)
-# ─────────────────────────────────────────
-# Canada postal codes → postcodes.io
-# ─────────────────────────────────────────
 
 
 async def get_weather_data(zip_code: str, country: str) -> Optional[dict]:
@@ -16,9 +9,7 @@ async def get_weather_data(zip_code: str, country: str) -> Optional[dict]:
         return None
 
     lat, lon = location["lat"], location["lon"]
-
-    # Both US and Canada — Open-Meteo (free, no key, very reliable)
-    weather_days = await get_openmeteo_weather(lat, lon, country)
+    weather_days = await get_openmeteo_weather(lat, lon)
 
     if not weather_days:
         return None
@@ -35,7 +26,6 @@ async def get_weather_data(zip_code: str, country: str) -> Optional[dict]:
 
 async def get_coordinates(zip_code: str, country: str) -> Optional[dict]:
     cleaned = zip_code.replace(" ", "").upper()
-
     if country == "US":
         return await get_us_coordinates(cleaned)
     else:
@@ -43,11 +33,8 @@ async def get_coordinates(zip_code: str, country: str) -> Optional[dict]:
 
 
 async def get_us_coordinates(zip_code: str) -> Optional[dict]:
-    """
-    Zippopotam.us — free, no key, no rate limits
-    """
+    """Zippopotam.us — free, no key needed"""
     url = f"https://api.zippopotam.us/us/{zip_code}"
-
     async with httpx.AsyncClient(timeout=10) as client:
         try:
             resp = await client.get(url)
@@ -62,21 +49,23 @@ async def get_us_coordinates(zip_code: str) -> Optional[dict]:
                 "region": place["state"],
             }
         except Exception as e:
-            print(f"Zippopotam error: {e}")
+            print(f"US coords error: {e}")
             return None
 
 
 async def get_canada_coordinates(postal_code: str) -> Optional[dict]:
     """
-    Geocoder.ca / Zippopotam for Canada
-    Format: first 3 chars (FSA) is enough
+    Canada postal code → coordinates
+    Try multiple APIs for reliability
     """
-    # Try full postal code first
-    fsa = postal_code[:3]  # Forward Sortation Area
-    url = f"https://api.zippopotam.us/ca/{fsa}"
+    cleaned = postal_code.replace(" ", "").upper()
+    fsa = cleaned[:3]  # First 3 chars e.g. K1A
 
-    async with httpx.AsyncClient(timeout=10) as client:
+    async with httpx.AsyncClient(timeout=15) as client:
+
+        # Method 1: Zippopotam for Canada FSA
         try:
+            url = f"https://api.zippopotam.us/ca/{fsa}"
             resp = await client.get(url)
             if resp.status_code == 200:
                 data = resp.json()
@@ -85,33 +74,71 @@ async def get_canada_coordinates(postal_code: str) -> Optional[dict]:
                     "lat": float(place["latitude"]),
                     "lon": float(place["longitude"]),
                     "city": place["place name"],
-                    "region": place["province abbreviation"],
+                    "region": place.get("province abbreviation", "CA"),
                 }
         except Exception as e:
-            print(f"Canada coords error: {e}")
+            print(f"CA method 1 error: {e}")
 
-        # Fallback: geocode.maps.co (free, no key)
+        # Method 2: Nominatim with full postal code
         try:
-            url2 = f"https://geocode.maps.co/search?q={postal_code}+Canada&limit=1"
-            resp2 = await client.get(url2)
-            if resp2.status_code == 200:
-                data2 = resp2.json()
-                if data2:
+            url = "https://nominatim.openstreetmap.org/search"
+            params = {
+                "q": f"{cleaned} Canada",
+                "format": "json",
+                "limit": 1,
+                "addressdetails": 1,
+            }
+            headers = {
+                "User-Agent": "SnowDayCalculator/1.0 contact@snowdaycalc.com",
+                "Accept-Language": "en-US,en;q=0.9",
+            }
+            resp = await client.get(url, params=params, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data:
+                    addr = data[0].get("address", {})
+                    city = (addr.get("city") or addr.get("town") or
+                            addr.get("village") or addr.get("county") or "Unknown")
+                    region = addr.get("state") or addr.get("province") or "CA"
                     return {
-                        "lat": float(data2[0]["lat"]),
-                        "lon": float(data2[0]["lon"]),
-                        "city": data2[0].get("display_name", "").split(",")[0],
-                        "region": "",
+                        "lat": float(data[0]["lat"]),
+                        "lon": float(data[0]["lon"]),
+                        "city": city,
+                        "region": region,
                     }
-        except Exception as e2:
-            print(f"Geocode fallback error: {e2}")
+        except Exception as e:
+            print(f"CA method 2 error: {e}")
+
+        # Method 3: Open-Meteo geocoding API
+        try:
+            url = f"https://geocoding-api.open-meteo.com/v1/search"
+            params = {
+                "name": cleaned,
+                "count": 1,
+                "language": "en",
+                "format": "json",
+            }
+            resp = await client.get(url, params=params)
+            if resp.status_code == 200:
+                data = resp.json()
+                results = data.get("results", [])
+                if results:
+                    r = results[0]
+                    return {
+                        "lat": float(r["latitude"]),
+                        "lon": float(r["longitude"]),
+                        "city": r.get("name", "Unknown"),
+                        "region": r.get("admin1", "CA"),
+                    }
+        except Exception as e:
+            print(f"CA method 3 error: {e}")
 
         return None
 
 
-async def get_openmeteo_weather(lat: float, lon: float, country: str) -> list:
+async def get_openmeteo_weather(lat: float, lon: float) -> list:
     """
-    Open-Meteo — completely free, no API key, works worldwide
+    Open-Meteo — completely free, no API key, works for US & Canada
     """
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
@@ -139,30 +166,30 @@ async def get_openmeteo_weather(lat: float, lon: float, country: str) -> list:
             daily = data.get("daily", {})
 
             days = []
-            for i in [1, 2]:  # tomorrow, day after
-                snow_cm = (daily.get("snowfall_sum", [0, 0, 0])[i] or 0) * 2.54  # inches → cm
+            for i in [1, 2]:  # tomorrow=1, day after=2
                 snow_inches = daily.get("snowfall_sum", [0, 0, 0])[i] or 0
-                temp_c = daily.get("temperature_2m_max", [0, 0, 0])[i] or 0
-                temp_f = round(temp_c * 9 / 5 + 32, 1)
-                wind_mph = daily.get("windspeed_10m_max", [0, 0, 0])[i] or 0
-                precip = daily.get("precipitation_probability_max", [0, 0, 0])[i] or 0
-                wcode = daily.get("weathercode", [0, 0, 0])[i] or 0
+                snow_cm     = round(snow_inches * 2.54, 1)
+                temp_c      = daily.get("temperature_2m_max", [0, 0, 0])[i] or 0
+                temp_f      = round(temp_c * 9 / 5 + 32, 1)
+                wind_mph    = daily.get("windspeed_10m_max", [0, 0, 0])[i] or 0
+                precip      = daily.get("precipitation_probability_max", [0, 0, 0])[i] or 0
+                wcode       = daily.get("weathercode", [0, 0, 0])[i] or 0
 
-                conditions = get_conditions_from_wmo(wcode)
-                forecast_text = get_forecast_text(wcode)
+                conditions   = get_conditions_from_wmo(wcode)
+                forecast_txt = get_forecast_text(wcode)
 
                 days.append({
-                    "date": daily.get("time", ["", "", ""])[i],
-                    "temperature_c": round(temp_c, 1),
-                    "temperature_f": temp_f,
-                    "wind_speed": f"{wind_mph} mph",
-                    "snow_cm": round(snow_cm, 1),
-                    "snow_inches": round(snow_inches, 1),
-                    "precip_chance": precip,
-                    "short_forecast": forecast_text,
-                    "detailed_forecast": f"{forecast_text}. Snow: {round(snow_inches,1)}in. Wind: {wind_mph}mph",
-                    "is_daytime": True,
-                    "conditions": conditions,
+                    "date":              daily.get("time", ["", "", ""])[i],
+                    "temperature_c":     round(temp_c, 1),
+                    "temperature_f":     temp_f,
+                    "wind_speed":        f"{wind_mph} mph",
+                    "snow_cm":           snow_cm,
+                    "snow_inches":       round(snow_inches, 1),
+                    "precip_chance":     precip,
+                    "short_forecast":    forecast_txt,
+                    "detailed_forecast": f"{forecast_txt}. Snow: {round(snow_inches,1)}in. Wind: {wind_mph}mph",
+                    "is_daytime":        True,
+                    "conditions":        conditions,
                 })
 
             return days
@@ -173,35 +200,31 @@ async def get_openmeteo_weather(lat: float, lon: float, country: str) -> list:
 
 
 def get_conditions_from_wmo(code: int) -> list:
-    """WMO weather codes → conditions list"""
+    """WMO weather code → conditions"""
     conditions = []
-    # Snow codes: 71-77, 85-86
     if code in range(71, 78) or code in [85, 86]:
         conditions.append("snow")
-    # Freezing rain: 56-57, 66-67
     if code in [56, 57, 66, 67]:
         conditions.append("ice")
-    # Heavy wind / storm: 95-99
     if code in range(95, 100):
         conditions.append("wind")
-    # Rain: 51-67, 80-82
     if code in range(51, 68) or code in range(80, 83):
         conditions.append("rain")
     return conditions
 
 
 def get_forecast_text(code: int) -> str:
-    """WMO weather interpretation codes → human readable"""
+    """WMO code → human readable"""
     wmo_map = {
-        0: "Clear sky", 1: "Mainly clear", 2: "Partly cloudy", 3: "Overcast",
-        45: "Foggy", 48: "Icy fog",
-        51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle",
-        61: "Slight rain", 63: "Moderate rain", 65: "Heavy rain",
-        71: "Slight snow", 73: "Moderate snow", 75: "Heavy snow",
-        77: "Snow grains",
-        80: "Rain showers", 81: "Moderate showers", 82: "Violent showers",
-        85: "Snow showers", 86: "Heavy snow showers",
-        95: "Thunderstorm", 96: "Thunderstorm with hail", 99: "Severe thunderstorm",
+        0:  "Clear sky",       1: "Mainly clear",    2: "Partly cloudy",
+        3:  "Overcast",        45: "Foggy",           48: "Icy fog",
+        51: "Light drizzle",   53: "Drizzle",         55: "Heavy drizzle",
+        61: "Slight rain",     63: "Moderate rain",   65: "Heavy rain",
+        71: "Slight snow",     73: "Moderate snow",   75: "Heavy snow",
+        77: "Snow grains",     80: "Rain showers",    81: "Moderate showers",
+        82: "Violent showers", 85: "Snow showers",    86: "Heavy snow showers",
+        95: "Thunderstorm",    96: "Thunderstorm with hail",
+        99: "Severe thunderstorm",
     }
     return wmo_map.get(code, "Mixed conditions")
 
