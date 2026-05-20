@@ -283,7 +283,7 @@ export default function App() {
 
         {/* ── Results ── */}
         {data && (
-          <section className="results" aria-live="polite" aria-label="Prediction results">
+  <section className="results" ref={el => el?.scrollIntoView({behavior:'smooth', block:'start'})}
             <div className="results__location">
               <Snowflake size={14} opacity={0.7} style={{ color: 'var(--blue)' }} />
               <span>{data.city}{data.region ? `, ${data.region}` : ''}</span>
