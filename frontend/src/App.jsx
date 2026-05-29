@@ -536,9 +536,9 @@ const appStyles = `
 .day-card__date { font-size: 0.95rem; font-weight: 500; color: var(--text-1); }
 .day-card__label { font-size: 0.9rem; color: var(--text-2); margin-bottom: 1.25rem; }
 .prob-ring { position: relative; flex-shrink: 0; }
-.prob-ring__inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 0; }
+.prob-ring__inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 1px; }
 .prob-ring__number { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; line-height: 1; }
-.prob-ring__pct { font-size: 0.75rem; font-weight: 600; color: var(--text-2); align-self: center; margin-bottom: 0; margin-top: 8px; }
+.prob-ring__pct { font-size: 0.75rem; font-weight: 600; color: var(--text-2); align-self: flex-end; margin-bottom: 4px; }
 .day-card__pills { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
 .weather-pill { display: flex; align-items: center; gap: 0.6rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--r-sm); padding: 0.6rem 0.75rem; }
 .weather-pill__icon { font-size: 1.1rem; flex-shrink: 0; }
