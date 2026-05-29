@@ -426,7 +426,7 @@ export default function App() {
               <DayCard day={data.tomorrow}  label="Tomorrow"           country={data.country} />
               <DayCard day={data.day_after} label="Day After Tomorrow" country={data.country} />
             </div>
-            <p className="results__source">
+            <p className="results__source" style={{color: 'var(--blue)'}}>
               Data from {data.country === 'US' ? 'Weather.gov' : 'Environment Canada'} ·
               Predictions updated at noon daily
             </p>
