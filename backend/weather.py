@@ -118,7 +118,7 @@ async def nominatim_ca(postal_code: str) -> Optional[dict]:
             resp = await client.get(
                 "https://nominatim.openstreetmap.org/search",
                 params={
-                    "q":              f"{postal_code} Canada",
+                    "q":              f"{postal_code[:3]} {postal_code[3:]} Canada",
                     "format":         "json",
                     "limit":          1,
                     "addressdetails": 1,
