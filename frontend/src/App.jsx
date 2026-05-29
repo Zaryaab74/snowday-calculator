@@ -323,20 +323,28 @@ const FAQ_DATA = [
   },
 ]
 
+function FAQItem({ item, isOpen, onToggle }) {
+  return (
+    <details className="faq" open={isOpen} onClick={e => { e.preventDefault(); onToggle(); }}
+      itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
+      <summary className="faq__q" itemProp="name">{item.q}</summary>
+      <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+        <p className="faq__a" itemProp="text">{item.a}</p>
+      </div>
+    </details>
+  )
+}
+
 function FAQSection() {
+  const [openIndex, setOpenIndex] = useState(0)
   return (
     <section id="faq" className="info-section faq-section" aria-labelledby="faq-title"
       itemScope itemType="https://schema.org/FAQPage">
       <h2 id="faq-title" className="section-title">Frequently Asked Questions</h2>
       <div className="faqs">
         {FAQ_DATA.map((item, i) => (
-          <details key={i} className="faq"
-            itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
-            <summary className="faq__q" itemProp="name">{item.q}</summary>
-            <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
-              <p className="faq__a" itemProp="text">{item.a}</p>
-            </div>
-          </details>
+          <FAQItem key={i} item={item} isOpen={openIndex === i}
+            onToggle={() => setOpenIndex(openIndex === i ? -1 : i)} />
         ))}
       </div>
     </section>
