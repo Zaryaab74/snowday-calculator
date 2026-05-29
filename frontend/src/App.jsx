@@ -463,7 +463,7 @@ export default function App() {
         <FAQSection />
 
         {/* ── Disclaimer ── */}
-        <div className="disclaimer">
+        <div className="disclaimer" style={{color: 'var(--blue)'}}>
           Predictions are updated continuously using Weather.gov (US) and Environment Canada data. This tool estimates probability and is not an official source of school closure information. Always confirm closures through your school board's official website, transportation consortium, or local emergency alerts.
         </div>
 
@@ -474,8 +474,8 @@ export default function App() {
         <div className="footer__snow">
           <Snowflake size={16} opacity={0.4} style={{ color: 'var(--blue)' }} />
         </div>
-        <p>Snow Day Calculator &copy; {new Date().getFullYear()}</p>
-        <p className="footer__sub">Data from Weather.gov &amp; Environment Canada · Not affiliated with any school board</p>
+        <p style={{color: 'var(--blue)'}}>Snow Day Calculator &copy; {new Date().getFullYear()}</p>
+        <p className="footer__sub" style={{color: 'var(--blue)'}}>Data from Weather.gov &amp; Environment Canada · Not affiliated with any school board</p>
       </footer>
 
       <style>{appStyles}</style>
