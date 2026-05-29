@@ -122,7 +122,7 @@ function CalculatorForm({ onSubmit, loading }) {
       <div className="calc-form__row">
         <div className="field">
           <label className="field__label" htmlFor="zip">ZIP or Postal Code</label>
-          <div className="field__hint">US: 10001 &nbsp;·&nbsp; Canada: K1A 0A6</div>
+          <div className="field__hint field__hint--highlight">US: 10001 &nbsp;·&nbsp; Canada: K1A 0A6</div>
           <input ref={inputRef} id="zip" className="field__input" type="text"
             value={zip} onChange={e => setZip(e.target.value)}
             placeholder="e.g. 10001 or K1A0A6" maxLength={7}
@@ -131,7 +131,7 @@ function CalculatorForm({ onSubmit, loading }) {
         </div>
         <div className="field field--sm">
           <label className="field__label" htmlFor="snowdays">Snow Days This Year</label>
-          <div className="field__hint">Already used</div>
+          <div className="field__hint field__hint--highlight">Already used</div>
           <input id="snowdays" className="field__input" type="number"
             value={snowDays} onChange={e => setSnowDays(e.target.value)}
             min="0" max="20" inputMode="numeric"
@@ -140,7 +140,7 @@ function CalculatorForm({ onSubmit, loading }) {
       </div>
       <div className="field">
         <label className="field__label" htmlFor="school">Type of School</label>
-        <div className="field__hint">Affects how likely a closure is called</div>
+        <div className="field__hint field__hint--highlight">Affects how likely a closure is called</div>
         <select id="school" className="field__select" value={school}
           onChange={e => setSchool(e.target.value)} aria-label="Select school type">
           <option value="public">Public</option>
@@ -513,6 +513,8 @@ const appStyles = `
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .field__label { font-size: 0.85rem; font-weight: 500; color: var(--text-1); }
 .field__hint { font-size: 0.75rem; color: var(--text-3); }
+.field__hint--highlight { color: var(--blue); }
+.results__source--highlight { color: var(--blue); }
 .field__input, .field__select { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: var(--r-md); padding: 0.75rem 1rem; color: var(--text-1); font-size: 1rem; transition: border-color var(--t-fast), box-shadow var(--t-fast); width: 100%; height: 50px; }
 .field__input:focus, .field__select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(96,165,250,0.15); }
 .field__select { -webkit-appearance: none; appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b9fc4' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem; }
