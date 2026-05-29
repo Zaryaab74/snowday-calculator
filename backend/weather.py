@@ -138,7 +138,7 @@ async def nominatim_ca(postal_code: str) -> Optional[dict]:
 
             # Validate coordinates are in Canada range
             # Canada: lat 41-84, lon -141 to -52
-            if not (41 <= lat <= 84 and -141 <= lon <= -52):
+            if not (41 <= lat <= 84 and -141 <= lon <= -50):
                 print(f"[nominatim_ca] coords out of CA range: ({lat}, {lon})")
                 return None
 
@@ -172,7 +172,7 @@ async def zippopotam_ca(postal_code: str) -> Optional[dict]:
             lon   = float(place["longitude"])
 
             # Validate coordinates
-            if not (41 <= lat <= 84 and -141 <= lon <= -52):
+            if not (41 <= lat <= 84 and -141 <= lon <= -50):
                 print(f"[zippopotam_ca] invalid coords: ({lat}, {lon})")
                 return None
 
