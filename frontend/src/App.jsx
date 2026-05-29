@@ -41,7 +41,7 @@ function ProbRing({ value, size = 140 }) {
   const r = 48
   const circ = 2 * Math.PI * r
   const dash = (value / 100) * circ
-  const color = value >= 60 ? '#f87171' : value >= 20 ? '#fb923c' : '#34d399'
+  const color = value >= 70 ? '#60a5fa' : value >= 40 ? '#818cf8' : '#475569'
   return (
     <div className="prob-ring" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
@@ -54,7 +54,8 @@ function ProbRing({ value, size = 140 }) {
         />
       </svg>
       <div className="prob-ring__inner">
-        <span className="prob-ring__number" style={{ color }}>{value}%</span>
+        <span className="prob-ring__number" style={{ color }}>{value}</span>
+        <span className="prob-ring__pct">%</span>
       </div>
     </div>
   )
@@ -77,8 +78,8 @@ function WeatherPill({ icon, label, value }) {
 function DayCard({ day, label, country }) {
   if (!day || !day.date) return null
   const prob = day.probability || 0
-  const high = prob >= 60
-  const med  = prob >= 20 && prob < 60
+  const high = prob >= 70
+  const med  = prob >= 40 && prob < 70
   const dateLabel = new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', {
     weekday: 'long', month: 'short', day: 'numeric'
   })
@@ -122,7 +123,7 @@ function CalculatorForm({ onSubmit, loading }) {
       <div className="calc-form__row">
         <div className="field">
           <label className="field__label" htmlFor="zip">ZIP or Postal Code</label>
-          <div className="field__hint field__hint--highlight">US: 10001 &nbsp;·&nbsp; Canada: K1A 0A6</div>
+          <div className="field__hint">US: 10001 &nbsp;·&nbsp; Canada: K1A 0A6</div>
           <input ref={inputRef} id="zip" className="field__input" type="text"
             value={zip} onChange={e => setZip(e.target.value)}
             placeholder="e.g. 10001 or K1A0A6" maxLength={7}
@@ -131,7 +132,7 @@ function CalculatorForm({ onSubmit, loading }) {
         </div>
         <div className="field field--sm">
           <label className="field__label" htmlFor="snowdays">Snow Days This Year</label>
-          <div className="field__hint field__hint--highlight">Already used</div>
+          <div className="field__hint">Already used</div>
           <input id="snowdays" className="field__input" type="number"
             value={snowDays} onChange={e => setSnowDays(e.target.value)}
             min="0" max="20" inputMode="numeric"
@@ -140,7 +141,7 @@ function CalculatorForm({ onSubmit, loading }) {
       </div>
       <div className="field">
         <label className="field__label" htmlFor="school">Type of School</label>
-        <div className="field__hint field__hint--highlight">Affects how likely a closure is called</div>
+        <div className="field__hint">Affects how likely a closure is called</div>
         <select id="school" className="field__select" value={school}
           onChange={e => setSchool(e.target.value)} aria-label="Select school type">
           <option value="public">Public</option>
@@ -156,6 +157,152 @@ function CalculatorForm({ onSubmit, loading }) {
         aria-label="Calculate snow day probability">
         {loading
           ? <><span className="spinner" aria-hidden="true" /> Checking weather…</>
+          : <><Snowflake size={18} opacity={1} /> Calculate</>}
+      </button>
+    </form>
+  )
+}
+
+/* ─── Manual Calculator Form ────────────────────── */
+function ManualCalculatorForm({ onSubmit, loading }) {
+  const [form, setForm] = useState({
+    stormType: 'snow', stormChance: '80',
+    startPeriod: 'pm_day_before', endPeriod: 'am_day',
+    tempF: '28', dayOfWeek: 'monday',
+    schoolType: 'public', snowDaysThisYear: '0',
+    leniency: 'okay', mountainous: false,
+    specialEvent: false, hype: '1', country: 'US',
+  })
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const handleSubmit = (e) => { e.preventDefault(); onSubmit(form) }
+
+  return (
+    <form className="calc-form" onSubmit={handleSubmit} noValidate>
+      <div className="calc-form__row">
+        <div className="field">
+          <label className="field__label" htmlFor="m-country">Country</label>
+          <select id="m-country" className="field__select" value={form.country} onChange={e => set('country', e.target.value)}>
+            <option value="US">🇺🇸 United States</option>
+            <option value="CA">🇨🇦 Canada</option>
+          </select>
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="m-day">Day of the Week</label>
+          <select id="m-day" className="field__select" value={form.dayOfWeek} onChange={e => set('dayOfWeek', e.target.value)}>
+            {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(d => (
+              <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="calc-form__row">
+        <div className="field">
+          <label className="field__label" htmlFor="m-storm">Type of Storm</label>
+          <select id="m-storm" className="field__select" value={form.stormType} onChange={e => set('stormType', e.target.value)}>
+            <option value="none">None</option>
+            <option value="flurries">Light Snow / Flurries</option>
+            <option value="snow_showers">Snow Showers</option>
+            <option value="wintry_mix">Wintry Mix</option>
+            <option value="snow">Snow</option>
+            <option value="freezing_rain">Freezing Rain</option>
+            <option value="heavy_snow">Heavy Snow</option>
+          </select>
+        </div>
+        <div className="field field--sm">
+          <label className="field__label" htmlFor="m-chance">Storm Chance %</label>
+          <div className="field__hint">0 – 100</div>
+          <input id="m-chance" className="field__input" type="number"
+            value={form.stormChance} onChange={e => set('stormChance', e.target.value)}
+            min="0" max="100" inputMode="numeric" />
+        </div>
+      </div>
+
+      <div className="calc-form__row">
+        <div className="field">
+          <label className="field__label" htmlFor="m-start">Storm Start</label>
+          <select id="m-start" className="field__select" value={form.startPeriod} onChange={e => set('startPeriod', e.target.value)}>
+            <option value="am_day_before">AM — The Day Before</option>
+            <option value="pm_day_before">PM — The Day Before</option>
+            <option value="am_day">AM — The Day</option>
+            <option value="pm_day">PM — The Day</option>
+          </select>
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="m-end">Storm End</label>
+          <select id="m-end" className="field__select" value={form.endPeriod} onChange={e => set('endPeriod', e.target.value)}>
+            <option value="pm_day_before">PM — The Day Before</option>
+            <option value="am_day">AM — The Day</option>
+            <option value="pm_day">PM — The Day</option>
+            <option value="am_day_after">AM — The Day After</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="calc-form__row">
+        <div className="field">
+          <label className="field__label" htmlFor="m-temp">Temperature at 7am (°F)</label>
+          <input id="m-temp" className="field__input" type="number"
+            value={form.tempF} onChange={e => set('tempF', e.target.value)} inputMode="numeric" />
+        </div>
+        <div className="field field--sm">
+          <label className="field__label" htmlFor="m-snowdays">Snow Days This Year</label>
+          <div className="field__hint">Already used</div>
+          <input id="m-snowdays" className="field__input" type="number"
+            value={form.snowDaysThisYear} onChange={e => set('snowDaysThisYear', e.target.value)}
+            min="0" max="20" inputMode="numeric" />
+        </div>
+      </div>
+
+      <div className="calc-form__row">
+        <div className="field">
+          <label className="field__label" htmlFor="m-school">Type of School</label>
+          <select id="m-school" className="field__select" value={form.schoolType} onChange={e => set('schoolType', e.target.value)}>
+            <option value="public">Public</option>
+            <option value="urban_public">Urban Public</option>
+            <option value="rural_public">Rural Public</option>
+            <option value="private">Private / Prep</option>
+            <option value="boarding">Boarding School</option>
+          </select>
+        </div>
+        <div className="field">
+          <label className="field__label" htmlFor="m-leniency">Administration Leniency</label>
+          <select id="m-leniency" className="field__select" value={form.leniency} onChange={e => set('leniency', e.target.value)}>
+            <option value="easy">Easy — Closes Often</option>
+            <option value="okay">Okay — Average</option>
+            <option value="harsh">Harsh — Rarely Closes</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="field">
+        <label className="field__label">Hype for a Snow Day (0–3)</label>
+        <div className="field__hint">0 = No hype &nbsp;·&nbsp; 3 = Everyone expects it</div>
+        <div className="hype-row">
+          {[0,1,2,3].map(n => (
+            <button key={n} type="button"
+              className={`hype-btn ${Number(form.hype) === n ? 'hype-btn--active' : ''}`}
+              onClick={() => set('hype', String(n))}>{n}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="manual-checks">
+        <label className="check-label">
+          <input type="checkbox" checked={form.mountainous} onChange={e => set('mountainous', e.target.checked)} />
+          <span>School in Mountainous Area</span>
+        </label>
+        <label className="check-label">
+          <input type="checkbox" checked={form.specialEvent} onChange={e => set('specialEvent', e.target.checked)} />
+          <span>Special Event / Activity Today</span>
+        </label>
+      </div>
+
+      <button type="submit"
+        className={`calc-btn ${loading ? 'calc-btn--loading' : ''}`}
+        disabled={loading} aria-label="Calculate snow day probability">
+        {loading
+          ? <><span className="spinner" aria-hidden="true" /> Calculating…</>
           : <><Snowflake size={18} opacity={1} /> Calculate</>}
       </button>
     </form>
@@ -323,28 +470,20 @@ const FAQ_DATA = [
   },
 ]
 
-function FAQItem({ item, isOpen, onToggle }) {
-  return (
-    <details className="faq" open={isOpen} onClick={e => { e.preventDefault(); onToggle(); }}
-      itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
-      <summary className="faq__q" itemProp="name">{item.q}</summary>
-      <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
-        <p className="faq__a" itemProp="text">{item.a}</p>
-      </div>
-    </details>
-  )
-}
-
 function FAQSection() {
-  const [openIndex, setOpenIndex] = useState(0)
   return (
     <section id="faq" className="info-section faq-section" aria-labelledby="faq-title"
       itemScope itemType="https://schema.org/FAQPage">
       <h2 id="faq-title" className="section-title">Frequently Asked Questions</h2>
       <div className="faqs">
         {FAQ_DATA.map((item, i) => (
-          <FAQItem key={i} item={item} isOpen={openIndex === i}
-            onToggle={() => setOpenIndex(openIndex === i ? -1 : i)} />
+          <details key={i} className="faq"
+            itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
+            <summary className="faq__q" itemProp="name">{item.q}</summary>
+            <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+              <p className="faq__a" itemProp="text">{item.a}</p>
+            </div>
+          </details>
         ))}
       </div>
     </section>
@@ -353,8 +492,9 @@ function FAQSection() {
 
 /* ─── App ───────────────────────────────────────── */
 export default function App() {
-  const { data, loading, error, predict } = useSnowDay()
+  const { data, loading, error, predict, predictManual } = useSnowDay()
   const resultsRef = useRef(null)
+  const [mode, setMode] = useState('auto')
 
   useEffect(() => {
     if (data && resultsRef.current) {
@@ -405,7 +545,26 @@ export default function App() {
               <h2 className="card__title">Get Your Prediction</h2>
               <div className="card__badge">Free · No sign-up</div>
             </div>
-            <CalculatorForm onSubmit={predict} loading={loading} />
+
+            {/* Mode Toggle */}
+            <div className="mode-toggle">
+              <button
+                className={`mode-btn ${mode === 'auto' ? 'mode-btn--active' : ''}`}
+                onClick={() => setMode('auto')} type="button">
+                ⚡ Automatic
+              </button>
+              <button
+                className={`mode-btn ${mode === 'manual' ? 'mode-btn--active' : ''}`}
+                onClick={() => setMode('manual')} type="button">
+                ✏️ Enter Weather Manually
+              </button>
+            </div>
+
+            {mode === 'auto'
+              ? <CalculatorForm onSubmit={predict} loading={loading} />
+              : <ManualCalculatorForm onSubmit={predictManual} loading={loading} />
+            }
+
             {error && (
               <div className="alert alert--error" role="alert" aria-live="polite">
                 <span>⚠</span> {error}
@@ -426,7 +585,7 @@ export default function App() {
               <DayCard day={data.tomorrow}  label="Tomorrow"           country={data.country} />
               <DayCard day={data.day_after} label="Day After Tomorrow" country={data.country} />
             </div>
-            <p className="results__source" style={{color: 'var(--blue)'}}>
+            <p className="results__source">
               Data from {data.country === 'US' ? 'Weather.gov' : 'Environment Canada'} ·
               Predictions updated at noon daily
             </p>
@@ -463,7 +622,7 @@ export default function App() {
         <FAQSection />
 
         {/* ── Disclaimer ── */}
-        <div className="disclaimer" style={{color: 'var(--blue)'}}>
+        <div className="disclaimer">
           Predictions are updated continuously using Weather.gov (US) and Environment Canada data. This tool estimates probability and is not an official source of school closure information. Always confirm closures through your school board's official website, transportation consortium, or local emergency alerts.
         </div>
 
@@ -474,8 +633,8 @@ export default function App() {
         <div className="footer__snow">
           <Snowflake size={16} opacity={0.4} style={{ color: 'var(--blue)' }} />
         </div>
-        <p style={{color: 'var(--blue)'}}>Snow Day Calculator &copy; {new Date().getFullYear()}</p>
-        <p className="footer__sub" style={{color: 'var(--blue)'}}>Data from Weather.gov &amp; Environment Canada · Not affiliated with any school board</p>
+        <p>Snow Day Calculator &copy; {new Date().getFullYear()}</p>
+        <p className="footer__sub">Data from Weather.gov &amp; Environment Canada · Not affiliated with any school board</p>
       </footer>
 
       <style>{appStyles}</style>
@@ -513,8 +672,6 @@ const appStyles = `
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .field__label { font-size: 0.85rem; font-weight: 500; color: var(--text-1); }
 .field__hint { font-size: 0.75rem; color: var(--text-3); }
-.field__hint--highlight { color: var(--blue); }
-.results__source--highlight { color: var(--blue); }
 .field__input, .field__select { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: var(--r-md); padding: 0.75rem 1rem; color: var(--text-1); font-size: 1rem; transition: border-color var(--t-fast), box-shadow var(--t-fast); width: 100%; height: 50px; }
 .field__input:focus, .field__select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(96,165,250,0.15); }
 .field__select { -webkit-appearance: none; appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b9fc4' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem; }
@@ -545,7 +702,7 @@ const appStyles = `
 .day-card__date { font-size: 0.95rem; font-weight: 500; color: var(--text-1); }
 .day-card__label { font-size: 0.9rem; color: var(--text-2); margin-bottom: 1.25rem; }
 .prob-ring { position: relative; flex-shrink: 0; }
-.prob-ring__inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 1px; padding-left: 12px; }
+.prob-ring__inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 1px; }
 .prob-ring__number { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; line-height: 1; }
 .prob-ring__pct { font-size: 0.75rem; font-weight: 600; color: var(--text-2); align-self: flex-end; margin-bottom: 4px; }
 .day-card__pills { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
@@ -557,7 +714,7 @@ const appStyles = `
 .section-title { font-family: var(--font-display); font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 800; color: var(--text-1); letter-spacing: -0.01em; }
 .steps { display: flex; flex-direction: column; gap: 1rem; }
 .step { display: flex; align-items: flex-start; gap: 1.25rem; padding: 1.25rem; border-radius: var(--r-md); background: var(--bg-card); border: 1px solid var(--border); }
-.step__num { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: rgba(96,165,250,0.6); line-height: 1; flex-shrink: 0; width: 2rem; }
+.step__num { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: rgba(96,165,250,0.25); line-height: 1; flex-shrink: 0; width: 2rem; }
 .step__title { font-weight: 500; color: var(--text-1); margin-bottom: 0.25rem; }
 .step__desc { font-size: 0.875rem; color: var(--text-2); }
 @media (min-width: 640px) { .steps { display: grid; grid-template-columns: 1fr 1fr; } }
@@ -598,6 +755,24 @@ details[open] .faq__q::after { content: '−'; }
 .footer { text-align: center; padding: 2.5rem 1.5rem; border-top: 1px solid var(--border); color: var(--text-3); font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; position: relative; z-index: 1; }
 .footer__snow { margin-bottom: 0.25rem; }
 .footer__sub { font-size: 0.73rem; }
+
+/* ── Mode Toggle ── */
+.mode-toggle { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--r-md); padding: 0.25rem; }
+.mode-btn { flex: 1; padding: 0.6rem 1rem; border: none; border-radius: calc(var(--r-md) - 2px); background: transparent; color: var(--text-2); font-size: 0.85rem; font-weight: 500; cursor: pointer; transition: all var(--t-fast); white-space: nowrap; }
+.mode-btn:hover { color: var(--text-1); }
+.mode-btn--active { background: rgba(96,165,250,0.15); color: var(--blue); border: 1px solid rgba(96,165,250,0.25); }
+
+/* ── Hype Row ── */
+.hype-row { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+.hype-btn { width: 48px; height: 48px; border: 1px solid var(--border); border-radius: var(--r-md); background: rgba(255,255,255,0.04); color: var(--text-2); font-size: 1rem; font-weight: 600; cursor: pointer; transition: all var(--t-fast); }
+.hype-btn:hover { border-color: var(--blue); color: var(--text-1); }
+.hype-btn--active { background: rgba(96,165,250,0.15); border-color: var(--blue); color: var(--blue); }
+
+/* ── Checkboxes ── */
+.manual-checks { display: flex; flex-direction: column; gap: 0.75rem; }
+.check-label { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; color: var(--text-2); font-size: 0.9rem; }
+.check-label input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--blue); cursor: pointer; flex-shrink: 0; }
+.check-label:hover { color: var(--text-1); }
 
 @media (min-width: 768px) and (max-width: 1024px) { .main { max-width: 700px; } .hero__title { font-size: clamp(3rem, 7vw, 5rem); } }
 @media (min-width: 1024px) { .hero__sub { font-size: 1.1rem; } .card { padding: 2.5rem; } }
