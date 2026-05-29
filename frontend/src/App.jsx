@@ -41,7 +41,7 @@ function ProbRing({ value, size = 140 }) {
   const r = 48
   const circ = 2 * Math.PI * r
   const dash = (value / 100) * circ
-  const color = value >= 70 ? '#60a5fa' : value >= 40 ? '#818cf8' : '#475569'
+  const color = value >= 60 ? '#f87171' : value >= 20 ? '#fb923c' : '#34d399'
   return (
     <div className="prob-ring" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
@@ -78,8 +78,8 @@ function WeatherPill({ icon, label, value }) {
 function DayCard({ day, label, country }) {
   if (!day || !day.date) return null
   const prob = day.probability || 0
-  const high = prob >= 70
-  const med  = prob >= 40 && prob < 70
+  const high = prob >= 60
+  const med  = prob >= 20 && prob < 60
   const dateLabel = new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', {
     weekday: 'long', month: 'short', day: 'numeric'
   })
