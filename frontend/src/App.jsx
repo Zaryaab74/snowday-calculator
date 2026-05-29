@@ -54,8 +54,7 @@ function ProbRing({ value, size = 140 }) {
         />
       </svg>
       <div className="prob-ring__inner">
-        <span className="prob-ring__number" style={{ color }}>{value}</span>
-        <span className="prob-ring__pct">%</span>
+        <span className="prob-ring__number" style={{ color }}>{value}%</span>
       </div>
     </div>
   )
